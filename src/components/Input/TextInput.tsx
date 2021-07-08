@@ -41,6 +41,7 @@ const TextInputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
         }}
         py={6}
         pr={8}
+        placeholder={'oi'}
         {...rest}
       />
 
