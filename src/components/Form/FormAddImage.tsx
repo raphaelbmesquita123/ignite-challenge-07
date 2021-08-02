@@ -1,6 +1,6 @@
 import { Box, Button, Stack, useToast } from '@chakra-ui/react';
-import { useForm } from 'react-hook-form';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useMutation, useQueryClient } from 'react-query';
 
 import { api } from '../../services/api';
@@ -11,91 +11,107 @@ interface FormAddImageProps {
   closeModal: () => void;
 }
 
+type FormDataCreate = {
+  image: string;
+  title: string;
+  description: string;
+};
+
 export function FormAddImage({ closeModal }: FormAddImageProps): JSX.Element {
   const [imageUrl, setImageUrl] = useState('');
   const [localImageUrl, setLocalImageUrl] = useState('');
   const toast = useToast();
 
+  const regexInputImageAcceptedFormats =
+    /(?:([^:/?#]+):)?(?:([^/?#]*))?([^?#](?:jpeg|gif|png))(?:\?([^#]*))?(?:#(.*))?/g;
+
   const formValidations = {
     image: {
-      required: true,
-      // validate: {
-      //   size: s => s < 10,
-      // }
-
+      required: 'Arquivo obrigatório',
+      validate: {
+        lessThan10MB: fileList =>
+          fileList[0].size < 10000000 || 'O arquivo deve ser menor que 10MB',
+        acceptedFormats: fileList =>
+          regexInputImageAcceptedFormats.test(fileList[0].type) ||
+          'Somente são aceitos arquivos PNG, JPEG e GIF',
+      },
     },
     title: {
-      required: true,
-      minLength: 2,
-      maxLength: 20,
+      required: 'Título obrigatorio',
+      minLength: {
+        value: 2,
+        message: 'Mínimo de 2 caracteres',
+      },
+      maxLength: {
+        value: 20,
+        message: 'Máximo de 20 caracteres',
+      },
     },
     description: {
-      required: true,
-      maxLength: 65
+      required: 'Descrição obrigatória',
+      maxLength: {
+        value: 65,
+        message: 'Máximo de 65 caracteres',
+      },
     },
   };
 
   const queryClient = useQueryClient();
-  
   const mutation = useMutation(
-    async () => {
-      // TODO MUTATION API POST REQUEST,
-      await api.post('api/images')
+    async (data: FormDataCreate) => {
+      const newData = {
+        ...data,
+        url: imageUrl,
+      };
+      const response = await api.post('api/images', newData);
+
+      return response.data;
     },
     {
-      // TODO ONSUCCESS MUTATION
       onSuccess: () => {
-        queryClient.invalidateQueries('todos')
+        queryClient.invalidateQueries('images');
       },
     }
   );
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState,
-    setError,
-    trigger,
-  } = useForm();
+  const { register, handleSubmit, reset, formState, setError, trigger } =
+    useForm();
   const { errors } = formState;
 
-  const onSubmit = async (data: Record<string, unknown>): Promise<void> => {
+  const onSubmit = async (data: FormDataCreate): Promise<void> => {
     try {
-      if( !imageUrl ){
-        // TODO SHOW ERROR TOAST IF IMAGE URL DOES NOT EXISTS
+      if (!imageUrl) {
         toast({
           title: 'Imagem não adicionada',
-          description: 'É preciso adicionar e aguardar o upload de uma imagem antes de realizar o cadastro',
-          duration: 9000,
+          description:
+            'É preciso adicionar e aguardar o upload de uma imagem antes de realizar o cadastro.',
+          status: 'error',
+          duration: 5000,
           isClosable: true,
-        })
-      } else {
-        // TODO EXECUTE ASYNC MUTATION
-        const image = async () => await mutation;
-        image()
-
-        // TODO SHOW SUCCESS TOAST
-        toast({
-          title: 'Imagem cadastrada',
-          description: 'Sua imagem foi cadastrada com sucesso.',
-          duration: 9000,
-          isClosable: true,
-        })
+        });
+        return;
       }
+
+      await mutation.mutateAsync(data);
+
+      toast({
+        title: 'Imagem cadastrada',
+        description: 'Sua imagem foi cadastrada com sucesso.',
+        status: 'success',
+      });
     } catch {
-      // TODO SHOW ERROR TOAST IF SUBMIT FAILED
       toast({
         title: 'Falha no cadastro',
         description: 'Ocorreu um erro ao tentar cadastrar a sua imagem.',
-        duration: 9000,
+        status: 'error',
+        duration: 5000,
         isClosable: true,
-      })
+      });
     } finally {
-      reset()
-      setImageUrl('')
-      setLocalImageUrl('')
-      closeModal()
+      reset();
+      setLocalImageUrl('');
+      setImageUrl('');
+      closeModal();
     }
   };
 
@@ -103,34 +119,29 @@ export function FormAddImage({ closeModal }: FormAddImageProps): JSX.Element {
     <Box as="form" width="100%" onSubmit={handleSubmit(onSubmit)}>
       <Stack spacing={4}>
         <FileInput
+          name="image"
           setImageUrl={setImageUrl}
           localImageUrl={localImageUrl}
           setLocalImageUrl={setLocalImageUrl}
           setError={setError}
           trigger={trigger}
-          {...register("image", formValidations['image'])}
+          {...register('image', formValidations.image)}
           error={errors.image}
-          />
-          {errors.image && errors.image.type === 'required' && <p>Arquivo obrigatório</p>}
+        />
 
         <TextInput
           placeholder="Título da imagem..."
-          name='title'
+          name="title"
+          {...register('title', formValidations.title)}
           error={errors.title}
-          {...register("title", formValidations['title'])}
-          />
-        {errors.title && errors.title.type === 'required' && <p>Título obrigatório</p>}
-        {errors.title && errors.title.type === 'minLength' && <p>Mínimo de 2 caracteres</p>}
-        {errors.title && errors.title.type === 'maxLength' && <p>Máximo de 20 caracteres</p>}
+        />
 
         <TextInput
           placeholder="Descrição da imagem..."
-          name='description'
+          name="description"
+          {...register('description', formValidations.description)}
           error={errors.description}
-          {...register("description", formValidations['description'])}
         />
-        {errors.description && errors.description.type === 'required' && <p>Descrição obrigatória</p>}
-        {errors.description && errors.description.type === 'maxLength' && <p>Máximo de 65 caracteres</p>}
       </Stack>
 
       <Button
