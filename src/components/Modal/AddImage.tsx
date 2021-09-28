@@ -7,6 +7,7 @@ import {
   ModalCloseButton,
 } from '@chakra-ui/react';
 
+//components
 import { FormAddImage } from '../Form/FormAddImage';
 
 interface ModalAddImageProps {
@@ -30,7 +31,7 @@ export function ModalAddImage({
 
         <ModalCloseButton />
 
-        <ModalBody px={60}>
+        <ModalBody px={6}>
           <FormAddImage closeModal={handleCloseModal} />
         </ModalBody>
       </ModalContent>

@@ -116,7 +116,13 @@ export function FormAddImage({ closeModal }: FormAddImageProps): JSX.Element {
   };
 
   return (
-    <Box as="form" width="100%" onSubmit={handleSubmit(onSubmit)}>
+    <Box
+      as="form"
+      width="100%"
+      maxW="600px"
+      margin="0 auto"
+      onSubmit={handleSubmit(onSubmit)}
+    >
       <Stack spacing={4}>
         <FileInput
           name="image"

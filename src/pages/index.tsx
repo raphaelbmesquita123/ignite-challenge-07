@@ -1,12 +1,15 @@
-import { Button, Box } from '@chakra-ui/react';
 import { useMemo } from 'react';
 import { useInfiniteQuery } from 'react-query';
+import { Button, Box } from '@chakra-ui/react';
 
+//components
 import { Header } from '../components/Header';
 import { Card, CardList } from '../components/CardList';
-import { api } from '../services/api';
 import { Loading } from '../components/Loading';
 import { Error } from '../components/Error';
+
+//services
+import { api } from '../services/api';
 
 type CardData = {
   data: Card[];
@@ -59,7 +62,7 @@ export default function Home(): JSX.Element {
     <>
       <Header />
 
-      <Box maxW={1120} px={20} mx="auto" my={20}>
+      <Box maxW={1120} px={1} mx="auto" my={20}>
         <CardList cards={formattedData} />
         {hasNextPage && (
           <Button mt="8" isLoading={isFetchingNextPage} onClick={loadImages}>
